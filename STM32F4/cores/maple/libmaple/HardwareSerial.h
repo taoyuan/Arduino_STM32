@@ -35,7 +35,7 @@
 #include "libmaple_types.h"
 #include "usart.h"
 
-#include "Print.h"
+#include "Stream.h"
 
 /*
  * IMPORTANT:
@@ -47,7 +47,7 @@
  * the documentation accordingly.
  */
 
-class HardwareSerial : public Print {
+class HardwareSerial : public Stream {
 public:
     HardwareSerial(usart_dev *usart_device,
                    uint8 tx_pin,
@@ -58,11 +58,12 @@ public:
     void end(void);
 
     /* I/O */
-    uint32 available(void);
+    virtual int available(void);
+    virtual int peek(void);
+    virtual void flush(void);
     uint32 pending(void);
-    int read(void);
-    void flush(void);
-    virtual void write(unsigned char);
+    virtual int read(void);
+    virtual size_t write(unsigned char);
     using Print::write;
 
     /* Pin accessors */
@@ -74,12 +75,12 @@ private:
     uint8 rx_pin;
 };
 
+extern HardwareSerial Serial;
 extern HardwareSerial Serial1;
 extern HardwareSerial Serial2;
-extern HardwareSerial Serial3;
 #if defined(STM32_HIGH_DENSITY) && !defined(BOARD_maple_RET6)
+extern HardwareSerial Serial3;
 extern HardwareSerial Serial4;
-extern HardwareSerial Serial5;
 #endif
 extern HardwareSerial &SerialDebug;
 #endif

@@ -56,19 +56,19 @@
 #define RX5 BOARD_UART5_RX_PIN
 #endif
 
-HardwareSerial Serial1(USART1, TX1, RX1);
+HardwareSerial Serial(USART1, TX1, RX1);
 
 #ifdef TX2
-HardwareSerial Serial2(USART2, TX2, RX2);
+HardwareSerial Serial1(USART2, TX2, RX2);
 #endif
 
 #ifdef TX3
-HardwareSerial Serial3(USART3, TX3, RX3);
+HardwareSerial Serial2(USART3, TX3, RX3);
 #endif
 
 #if defined(STM32_HIGH_DENSITY) && !defined(BOARD_maple_RET6)
-HardwareSerial Serial4(UART4,  TX4, RX4);
-HardwareSerial Serial5(UART5,  TX5, RX5);
+HardwareSerial Serial3(UART4,  TX4, RX4);
+HardwareSerial Serial4(UART5,  TX5, RX5);
 #endif
 
 HardwareSerial::HardwareSerial(usart_dev *usart_device,
@@ -94,8 +94,14 @@ void HardwareSerial::begin(uint32 baud) {
     const stm32_pin_info *rxi = &PIN_MAP[rx_pin];
 #ifdef STM32F2
 	// int af = 7<<8;
-    gpio_set_af_mode(txi->gpio_device, txi->gpio_bit, 7);
-    gpio_set_af_mode(rxi->gpio_device, rxi->gpio_bit, 7);
+    if (usart_device == UART4 || usart_device == UART5) {
+        gpio_set_af_mode(txi->gpio_device, txi->gpio_bit, 8);
+        gpio_set_af_mode(rxi->gpio_device, rxi->gpio_bit, 8);
+    }
+    else {
+        gpio_set_af_mode(txi->gpio_device, txi->gpio_bit, 7);
+        gpio_set_af_mode(rxi->gpio_device, rxi->gpio_bit, 7);
+    }
     gpio_set_mode(txi->gpio_device, txi->gpio_bit, (gpio_pin_mode)(GPIO_AF_OUTPUT_PP | GPIO_PUPD_INPUT_PU | 0x700));
     gpio_set_mode(rxi->gpio_device, rxi->gpio_bit, (gpio_pin_mode)(GPIO_MODE_AF      | GPIO_PUPD_INPUT_PU | 0x700));
     //gpio_set_mode(txi->gpio_device, txi->gpio_bit, (gpio_pin_mode)(GPIO_PUPD_INPUT_PU));
@@ -132,16 +138,22 @@ int HardwareSerial::read(void) {
 	}
 }
 
-uint32 HardwareSerial::available(void) {
+int HardwareSerial::available(void) {
     return usart_data_available(usart_device);
 }
 
+int HardwareSerial::peek(void)
+{
+    return usart_peek(usart_device);
+}
+    
 uint32 HardwareSerial::pending(void) {
     return usart_data_pending(usart_device);
 }
 
-void HardwareSerial::write(unsigned char ch) {
+size_t HardwareSerial::write(unsigned char ch) {
     usart_putc(usart_device, ch);
+    return 1;
 }
 
 void HardwareSerial::flush(void) {
